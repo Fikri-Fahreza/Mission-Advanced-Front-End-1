@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getVideos, addVideoAPI, updateVideoAPI, deleteVideoAPI } from '../services/api';
 import avatar from '../assets/avatar web.png';
 import img1 from '../assets/Rectangle 2.png';
 
@@ -6,7 +7,6 @@ const VideoCollection = () => {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [newVideo, setNewVideo] = useState({
     title: '',
     price: '',
@@ -15,27 +15,19 @@ const VideoCollection = () => {
     reviews: '',
     rating: 0,
   });
-
   const [editVideo, setEditVideo] = useState(null);
-
 
   useEffect(() => {
     const fetchVideos = async () => {
       try {
         setLoading(true);
         setError(null);
-
-
         const localVideos = JSON.parse(localStorage.getItem('videos')) || [];
-
-        const response = await fetch(import.meta.env.VITE_API_BASE_URL);
-        if (!response.ok) throw new Error('Gagal mengambil data video');
-        const apiData = await response.json();
-
-
-        const mergedVideos = [...apiData];
+        const apiVideos = await getVideos();
+        
+        const mergedVideos = [...apiVideos];
         localVideos.forEach((localVideo) => {
-          if (!apiData.some((apiVideo) => apiVideo.id === localVideo.id)) {
+          if (!apiVideos.some((apiVideo) => apiVideo.id === localVideo.id)) {
             mergedVideos.push(localVideo);
           }
         });
@@ -56,23 +48,20 @@ const VideoCollection = () => {
     fetchVideos();
   }, []);
 
-
   useEffect(() => {
     if (videos.length > 0) {
       localStorage.setItem('videos', JSON.stringify(videos));
     }
   }, [videos]);
 
-// tambah video
-  const addVideo = () => {
+  const addVideo = async () => {
     const { title, price, name, position, reviews } = newVideo;
     if (!title || !price || !name || !position || !reviews) return;
 
-    const newId = videos.length ? Math.max(...videos.map((v) => parseInt(v.id))) + 1 : 1;
-    const updatedVideos = [
-      ...videos,
-      {
-        id: newId.toString(), 
+    try {
+      const newId = videos.length ? Math.max(...videos.map((v) => parseInt(v.id))) + 1 : 1;
+      const videoData = {
+        id: newId.toString(),
         img: img1,
         title,
         rating: 0,
@@ -80,19 +69,26 @@ const VideoCollection = () => {
         name,
         position,
         reviews: parseInt(reviews),
-      },
-    ];
-    setVideos(updatedVideos);
-    setNewVideo({ title: '', price: '', name: '', position: '', reviews: '', rating: 0 });
+      };
+      
+      const addedVideo = await addVideoAPI(videoData);
+      setVideos([...videos, addedVideo]);
+      setNewVideo({ title: '', price: '', name: '', position: '', reviews: '', rating: 0 });
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
-  // hapus video
-  const deleteVideo = (id) => {
-    const updatedVideos = videos.filter((video) => video.id !== id);
-    setVideos(updatedVideos);
+  const deleteVideo = async (id) => {
+    try {
+      await deleteVideoAPI(id);
+      const updatedVideos = videos.filter((video) => video.id !== id);
+      setVideos(updatedVideos);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
-  //  mulai edit video
   const startEdit = (video) => {
     setEditVideo(video);
     setNewVideo({
@@ -105,26 +101,29 @@ const VideoCollection = () => {
     });
   };
 
-  // update video
-  const updateVideo = () => {
+  const updateVideo = async () => {
     const { title, price, name, position, reviews } = newVideo;
     if (!title || !price || !name || !position || !reviews) return;
 
-    const updatedVideos = videos.map((video) =>
-      video.id === editVideo.id
-        ? {
-            ...video,
-            title,
-            price,
-            name,
-            position,
-            reviews: parseInt(reviews),
-          }
-        : video
-    );
-    setVideos(updatedVideos);
-    setEditVideo(null);
-    setNewVideo({ title: '', price: '', name: '', position: '', reviews: '', rating: 0 });
+    try {
+      const updatedVideoData = {
+        ...editVideo,
+        title,
+        price,
+        name,
+        position,
+        reviews: parseInt(reviews),
+      };
+      
+      const updatedVideo = await updateVideoAPI(editVideo.id, updatedVideoData);
+      setVideos(videos.map((video) => 
+        video.id === editVideo.id ? updatedVideo : video
+      ));
+      setEditVideo(null);
+      setNewVideo({ title: '', price: '', name: '', position: '', reviews: '', rating: 0 });
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   if (loading) return <p>Loading videos...</p>;

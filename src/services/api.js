@@ -1,8 +1,44 @@
 import axios from 'axios';
 
-const BASE_URL = process.env.REACT_APP_API_BASE_URL;
+const api = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
 
-export const getCollections = () => axios.get(`${BASE_URL}/collections`);
-export const addCollection = (data) => axios.post(`${BASE_URL}/collections`, data);
-export const updateCollection = (id, data) => axios.put(`${BASE_URL}/collections/${id}`, data);
-export const deleteCollection = (id) => axios.delete(`${BASE_URL}/collections/${id}`);
+export const getVideos = async () => {
+  try {
+    const response = await api.get('/');
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Gagal mengambil data video');
+  }
+};
+
+export const addVideoAPI = async (videoData) => {
+  try {
+    const response = await api.post('/', videoData);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Gagal menambahkan video');
+  }
+};
+
+export const updateVideoAPI = async (id, videoData) => {
+  try {
+    const response = await api.put(`/${id}`, videoData);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Gagal memperbarui video');
+  }
+};
+
+export const deleteVideoAPI = async (id) => {
+  try {
+    const response = await api.delete(`/${id}`);
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || 'Gagal menghapus video');
+  }
+};

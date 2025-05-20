@@ -18,22 +18,21 @@ const VideoCollection = () => {
 
   const [editVideo, setEditVideo] = useState(null);
 
-  // Load videos from localStorage or API on mount
+
   useEffect(() => {
     const fetchVideos = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // Check localStorage first
+
         const localVideos = JSON.parse(localStorage.getItem('videos')) || [];
 
-        // Fetch from API
         const response = await fetch(import.meta.env.VITE_API_BASE_URL);
         if (!response.ok) throw new Error('Gagal mengambil data video');
         const apiData = await response.json();
 
-        // Merge API data with localStorage (avoid duplicates by id)
+
         const mergedVideos = [...apiData];
         localVideos.forEach((localVideo) => {
           if (!apiData.some((apiVideo) => apiVideo.id === localVideo.id)) {
@@ -42,11 +41,9 @@ const VideoCollection = () => {
         });
 
         setVideos(mergedVideos);
-        // Save merged data to localStorage
         localStorage.setItem('videos', JSON.stringify(mergedVideos));
       } catch (err) {
         setError(err.message);
-        // If API fails, fall back to localStorage
         const localVideos = JSON.parse(localStorage.getItem('videos')) || [];
         if (localVideos.length > 0) {
           setVideos(localVideos);
@@ -59,14 +56,14 @@ const VideoCollection = () => {
     fetchVideos();
   }, []);
 
-  // Save videos to localStorage whenever videos state changes
+
   useEffect(() => {
     if (videos.length > 0) {
       localStorage.setItem('videos', JSON.stringify(videos));
     }
   }, [videos]);
 
-  // Fungsi tambah video
+// tambah video
   const addVideo = () => {
     const { title, price, name, position, reviews } = newVideo;
     if (!title || !price || !name || !position || !reviews) return;
@@ -75,7 +72,7 @@ const VideoCollection = () => {
     const updatedVideos = [
       ...videos,
       {
-        id: newId.toString(), // Ensure id is a string to match API format
+        id: newId.toString(), 
         img: img1,
         title,
         rating: 0,
@@ -89,13 +86,13 @@ const VideoCollection = () => {
     setNewVideo({ title: '', price: '', name: '', position: '', reviews: '', rating: 0 });
   };
 
-  // Fungsi hapus video
+  // hapus video
   const deleteVideo = (id) => {
     const updatedVideos = videos.filter((video) => video.id !== id);
     setVideos(updatedVideos);
   };
 
-  // Fungsi mulai edit video
+  //  mulai edit video
   const startEdit = (video) => {
     setEditVideo(video);
     setNewVideo({
@@ -108,7 +105,7 @@ const VideoCollection = () => {
     });
   };
 
-  // Fungsi update video
+  // update video
   const updateVideo = () => {
     const { title, price, name, position, reviews } = newVideo;
     if (!title || !price || !name || !position || !reviews) return;
